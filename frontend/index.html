@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Laira – AI Tech Tutor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body{
+    height:100vh;
+    font-family:"Segoe UI",sans-serif;
+    background:radial-gradient(circle at top,#1e1b4b,#020617);
+    color:#e5e7eb;
+    overflow:hidden;
+    cursor:none;
+}
+
+/* ---------- CURSOR ---------- */
+.cursor-dot,.cursor-outline{
+    position:fixed;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+}
+.cursor-dot{width:8px;height:8px;background:#a5b4fc;border-radius:50%}
+.cursor-outline{
+    width:36px;height:36px;
+    border:2px solid rgba(165,180,252,.5);
+    border-radius:50%;
+}
+.cursor-typing .cursor-outline{
+    border-color:#22d3ee;
+    transform:translate(-50%,-50%) scale(1.6);
+}
+
+/* ---------- HOME ---------- */
+.home{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:20px;
+}
+.home h1{
+    font-size:46px;
+    background:linear-gradient(135deg,#6366f1,#22d3ee);
+    background-clip:text;
+    -webkit-background-clip:text;
+    color:transparent;
+}
+.home button{
+    width:120px;height:120px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:600;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;border:none;cursor:pointer;
+    box-shadow:0 0 30px rgba(99,102,241,.6);
+}
+.home button:hover{transform:scale(1.08)}
+
+/* ---------- CHAT PAGE ---------- */
+.chat-page{
+    display:none;
+    height:100vh;
+    flex-direction:column;
+}
+
+/* ---------- NAV ---------- */
+.nav{
+    height:70px;
+    display:flex;align-items:center;
+    gap:14px;padding:0 24px;
+    background:rgba(255,255,255,.05);
+    backdrop-filter:blur(12px);
+}
+
+/* ---------- ROBOT ---------- */
+.robot-svg{animation:floatBot 3s infinite}
+.robot-head{fill:#6366f1;transition:.3s}
+.robot.ai-thinking .robot-head{fill:#22d3ee}
+.robot.error .robot-head{fill:#ef4444}
+.eye{fill:#e0e7ff}
+
+/* ---------- CHAT ---------- */
+.chat{
+    flex:1;
+    padding:30px 18%;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+}
+.msg{
+    max-width:65%;
+    padding:14px 18px;
+    border-radius:18px;
+    line-height:1.5;
+}
+.msg.user{
+    align-self:flex-end;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+}
+.msg.ai{
+    align-self:flex-start;
+    background:rgba(255,255,255,.1);
+    backdrop-filter:blur(10px);
+    margin-left:4%;
+}
+
+/* ---------- TYPING INDICATOR ---------- */
+.typing-indicator{
+    display:none;
+    margin-left:22%;
+    margin-bottom:12px;
+    color:rgba(255,255,255,.7);
+    font-size:14px;
+}
+.typing-indicator.show{display:block}
+.dot{animation:blink 1.4s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+
+/* ---------- INPUT ---------- */
+.input{
+    height:80px;
+    display:flex;
+    gap:12px;
+    padding:16px 18%;
+    background:rgba(255,255,255,.05);
+}
+input{
+    flex:1;
+    border:none;
+    border-radius:30px;
+    padding:14px 18px;
+    font-size:16px;
+}
+button{
+    width:56px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;
+    font-size:22px;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes floatBot{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-6px)}
+}
+@keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-4px)}
+    75%{transform:translateX(4px)}
+}
+@keyframes blink{
+    0%{opacity:.2}
+    20%{opacity:1}
+    100%{opacity:.2}
+}
+</style>
+</head>
+
+<body>
+
+<div class="cursor-dot"></div>
+<div class="cursor-outline"></div>
+
+<!-- HOME -->
+<div class="home" id="home">
+    <h1>Laira</h1>
+    <button onclick="start()"><span>Let's<br>Start</span></button>
+</div>
+
+<!-- CHAT -->
+<div class="chat-page" id="chatPage">
+
+    <div class="nav">
+        <div class="robot" id="robot">
+            <svg width="42" height="42" viewBox="0 0 200 200" class="robot-svg">
+                <rect x="40" y="50" rx="20" ry="20" width="120" height="100" class="robot-head"/>
+                <circle cx="80" cy="100" r="8" class="eye"/>
+                <circle cx="120" cy="100" r="8" class="eye"/>
+            </svg>
+        </div>
+        <h2>Laira – AI Tech Tutor</h2>
+    </div>
+
+    <div class="chat" id="chat"></div>
+
+    <div class="typing-indicator" id="typingIndicator">
+        Laira is typing<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+    </div>
+
+    <div class="input">
+        <input id="input" placeholder="Ask something..." />
+        <button onclick="send()">➤</button>
+    </div>
+
+</div>
+
+<script>
+/* ---------- CURSOR ---------- */
+const dot=document.querySelector(".cursor-dot");
+const outline=document.querySelector(".cursor-outline");
+let x=0,y=0,ox=0,oy=0;
+document.addEventListener("mousemove",e=>{
+    x=e.clientX;y=e.clientY;
+    dot.style.left=x+"px";
+    dot.style.top=y+"px";
+});
+(function animate(){
+    ox+=(x-ox)*0.15; oy+=(y-oy)*0.15;
+    outline.style.left=ox+"px";
+    outline.style.top=oy+"px";
+    requestAnimationFrame(animate);
+})();
+
+/* ---------- APP ---------- */
+const home=document.getElementById("home");
+const chatPage=document.getElementById("chatPage");
+const chat=document.getElementById("chat");
+const input=document.getElementById("input");
+const robot=document.getElementById("robot");
+const typingIndicator=document.getElementById("typingIndicator");
+
+function start(){
+    home.style.display="none";
+    chatPage.style.display="flex";
+}
+
+function typeAI(text){
+    typingIndicator.classList.remove("show");
+    document.body.classList.add("cursor-typing");
+    robot.classList.add("ai-thinking");
+
+    let i=0;
+    const div=document.createElement("div");
+    div.className="msg ai";
+    chat.appendChild(div);
+
+    const interval=setInterval(()=>{
+        div.textContent+=text[i++];
+        chat.scrollTop=chat.scrollHeight;
+        if(i>=text.length){
+            clearInterval(interval);
+            document.body.classList.remove("cursor-typing");
+            robot.classList.remove("ai-thinking");
+        }
+    },20);
+}
+
+async function send(){
+    const text=input.value.trim();
+    if(!text)return;
+
+    chat.innerHTML+=`<div class="msg user">${text}</div>`;
+    input.value="";
+    typingIndicator.classList.add("show");
+
+    try{
+        const res=await fetch("http://127.0.0.1:8000/chat",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({message:text})
+        });
+        const data=await res.json();
+        typeAI(data.reply);
+    }catch{
+        robot.classList.add("error");
+        robot.style.animation="shake .4s";
+        typingIndicator.classList.remove("show");
+        typeAI("⚠️ Backend error");
+        setTimeout(()=>robot.classList.remove("error"),600);
+    }
+}
+</script>
+
+</body>
+</html>
