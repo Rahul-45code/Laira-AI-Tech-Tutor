@@ -268,13 +268,18 @@ async function send(){
         });
         const data=await res.json();
         typeAI(data.reply);
-    }catch{
-        robot.classList.add("error");
-        robot.style.animation="shake .4s";
-        typingIndicator.classList.remove("show");
-        typeAI("⚠️ Backend error");
-        setTimeout(()=>robot.classList.remove("error"),600);
-    }
+    }catch {
+    typingIndicator.classList.remove("show");
+
+    typeAI(
+        "👋 Hi! This is the live demo of Laira.\n\n" +
+        "The AI backend runs locally during development and is not deployed online yet.\n\n" +
+        "You can view the full source code on GitHub to run the complete AI experience locally."
+    );
+
+    robot.classList.add("error");
+    setTimeout(() => robot.classList.remove("error"), 600);
+}
 }
 </script>
 
